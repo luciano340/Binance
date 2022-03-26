@@ -32,10 +32,7 @@ for k in assets['symbols']:
 logging.debug(f'Total assets to be used: {len(asset_list)}')
 logging.info(f'Assents found {asset_list}')
 
-
-def i(asset):
-    print(f'trabalhando no {asset}')
-
 if __name__ == '__main__':
     for asset in asset_list:
-        Thread(target=i, args=(asset,))
+        bot = bot_work(asset)
+        Thread(target=bot_work.start_stream())
