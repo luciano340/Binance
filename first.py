@@ -1,6 +1,7 @@
 from binance.client import Client
 from secrets import api_key, api_secret
 from web_bot import bot_work
+from threading import Thread
 import logging
 import re
 
@@ -10,7 +11,7 @@ format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(messa
 try:
     client = Client(api_key, api_secret)
 except Exception as err:
-    loggin.error(f'Connection Error {err}')
+    logging.error(f'Connection Error {err}')
     exit(1)
 
 status = client.get_account_status()
@@ -31,7 +32,10 @@ for k in assets['symbols']:
 logging.debug(f'Total assets to be used: {len(asset_list)}')
 logging.info(f'Assents found {asset_list}')
 
-i = asset_list[-1]
 
-bot = bot_work(i)
-bot.start_stream()
+def i(asset):
+    print(f'trabalhando no {asset}')
+
+if __name__ == '__main__':
+    for asset in asset_list:
+        Thread(target=i, args=(asset,))
