@@ -4,8 +4,10 @@ from threading import Thread
 import logging
 import re
 import os
+import random
+import time
 
-logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.INFO,
+logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.DEBUG,
 format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
 
 try:
@@ -20,19 +22,22 @@ logging.debug(f'Connection status {status["data"]}')
 info = client.get_account()
 logging.debug(f'Account information: \n{info}')
 
-assets = client.futures_exchange_info()
+#assets = client.futures_exchange_info()
 
-asset_list = list()
-for k in assets['symbols']:
-    if re.search(r'[0-9]$', k['symbol']):
-        continue
+asset_list = ['BTCUSDT', 'MATICUSDT', 'ETHUSDT', 'LINKUSDT', 'BNBUSDT', 'SOLUSDT']
 
-    asset_list.append(k['symbol'])
+# asset_list = list()
+# for k in assets['symbols']:
+#     if re.search(r'[0-9]$', k['symbol']):
+#         continue
+
+#     asset_list.append(k['symbol'])
 
 logging.debug(f'Total assets to be used: {len(asset_list)}')
 logging.info(f'Assents found {asset_list}')
 
 if __name__ == '__main__':
     for asset in asset_list:
-        bot = bot_work(asset)
+        time.sleep(random.randrange(90, 150)/100)
+        bot = bot_work(asset, client)
         Thread(target=bot.start_stream).start()
