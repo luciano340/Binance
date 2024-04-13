@@ -35,4 +35,4 @@ logging.info(f'Assents found {asset_list}')
 if __name__ == '__main__':
     for asset in asset_list:
         bot = bot_work(asset)
-        Thread(target=bot_work.start_stream())
+        Thread(target=bot.start_stream).start()

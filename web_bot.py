@@ -42,7 +42,7 @@ class bot_work:
 
         if not is_candle_closed:
             return None
-
+        
         self.closed_values.append(float(close))
         self.high_values.append(float(high))
         self.low_values.append(float(low))
@@ -61,7 +61,7 @@ class bot_work:
         mfi = talib.MFI(np_high, np_low, np_closes, np_volume, RSI_PERIOD)
         last_mfi = mfi[-1]
 
-        logging.debug(f'Last for {self.coin}: {last_rsi} - Last MFI for {mfi} {self.coin}: {last_mfi}')
+        logging.info(f'Last for {self.coin}: {last_rsi} - Last MFI for {mfi} {self.coin}: {last_mfi}')
         
         if last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD:
             logging.warn(f'{self.coin} Em tentencia de long')
