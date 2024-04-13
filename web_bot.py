@@ -1,5 +1,6 @@
 import websocket, json, talib, numpy, logging
-
+import telepot
+import os
 
 class bot_work:
     def __init__(self, coin):
@@ -8,6 +9,7 @@ class bot_work:
         self.high_values = list()
         self.low_values = list()
         self.volume_values = list()
+        self.telebot = telepot.Bot(os.environ['telegram_bot_token'])
 
     def reset_lists(self):
         logging.info(f'Reset informations lists for {self.coin}')
@@ -62,11 +64,16 @@ class bot_work:
         last_mfi = mfi[-1]
 
         logging.info(f'Last for {self.coin}: {last_rsi} - Last MFI for {mfi} {self.coin}: {last_mfi}')
+        self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Last for {self.coin}: {last_rsi} - Last MFI for {mfi} {self.coin}: {last_mfi}')
         
         if last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD:
-            logging.warn(f'{self.coin} Em tentencia de long')
+            msg = f'{self.coin} Em tentencia de long'
+            logging.warn(msg)
+            self.telebot.sendMessage(os.environ['telegram_chat_id'], msg)
         elif last_rsi >= RSI_OVERBOUGHT and last_mfi >= MFI_OVERBOUGHT:
-            logging.warn(f'{self.coin} Em tentencia de sort')
+            msg = f'{self.coin} Em tentencia de sort'
+            logging.warn(msg)
+            self.telebot.sendMessage(os.environ['telegram_chat_id'], msg)
             
         self.reset_lists()
 

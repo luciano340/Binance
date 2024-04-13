@@ -5,7 +5,7 @@ import logging
 import re
 import os
 
-logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.DEBUG,
+logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.INFO,
 format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
 
 try:
