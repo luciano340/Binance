@@ -1,5 +1,4 @@
 from binance.client import Client
-from secrets import api_key, api_secret
 from web_bot import bot_work
 from threading import Thread
 import logging
