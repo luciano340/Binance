@@ -10,7 +10,7 @@ class bot_work:
         self.volume_values = list()
 
     def reset_lists(self):
-        logging.debug(f'Reset informations lists for {self.coin}')
+        logging.info(f'Reset informations lists for {self.coin}')
         self.closed_values = list()
         self.high_values = list()
         self.low_values = list()
