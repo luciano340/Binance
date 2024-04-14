@@ -1,61 +1,66 @@
 from binance.client import Client
 from web_bot import bot_work
 from threading import Thread
+from multiprocessing import Pool, Manager
 import logging
 import re
 import os
 import random
 import time
 
-logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.DEBUG,
-format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
 
-try:
-    client = Client(os.environ['api_key_binance'], os.environ['api_secret_biance'])
-except Exception as err:
-    logging.error(f'Connection Error {err}')
-    exit(1)
+def validate_ticker(symbol, array, client):
+    if re.search(r'[0-9]$', symbol):
+        return
 
-status = client.get_account_status()
-logging.debug(f'Connection status {status["data"]}')
-
-info = client.get_account()
-logging.debug(f'Account information: \n{info}')
-
-assets = client.get_exchange_info()
-
-# asset_list = ['BTCUSDT', 'MATICUSDT', 'ETHUSDT', 'LINKUSDT', 'BNBUSDT', 'SOLUSDT']
-
-asset_list = list()
-for k in assets['symbols']:
-    if re.search(r'[0-9]$', k['symbol']):
-        continue
-
-    if not re.search(r'USDT$', k['symbol']):
-        continue
+    if not re.search(r'USDT$', symbol):
+        return
     
     try:
-        ticker_info = client.get_ticker(symbol=k['symbol'])
+        time.sleep(random.randrange(60, 90)/100)
+        ticker_info = client.get_ticker(symbol=symbol)
     except Exception as err:
-        print(f'{err} - {k['symbol']}')
-        continue
+        print(f'{err} - {symbol}')
+        return
     
-    print(f'Price {k['symbol']} {ticker_info['lastPrice']}')
-    if float(ticker_info['lastPrice']) < 0.50:
-        continue
+    print(f'Price {symbol} {ticker_info['lastPrice']} - {os.getpid()}')
+    if float(ticker_info['lastPrice']) < 1.50:
+        return
     
-    print(f'Volume {k['symbol']} {ticker_info['quoteVolume']}')
-    if float(ticker_info['quoteVolume']) < 24000:
-        continue
+    print(f'Volume {symbol} {ticker_info['quoteVolume']} - {os.getpid()}')
+    if float(ticker_info['quoteVolume']) < 48000:
+        return
 
-    asset_list.append(k['symbol'])
-    print(asset_list)
-    time.sleep(random.randrange(50, 80)/100)
-
-logging.debug(f'Total assets to be used: {len(asset_list)}')
-logging.info(f'Assents found {asset_list}')
+    array.append(symbol)
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
+
+    try:
+        client = Client(os.environ['api_key_binance'], os.environ['api_secret_biance'])
+        manager = Manager()
+        asset_list = manager.list()
+    except Exception as err:
+        logging.error(f'Connection Error {err}')
+        exit(1)
+
+    status = client.get_account_status()
+    logging.debug(f'Connection status {status["data"]}')
+
+    info = client.get_account()
+    logging.debug(f'Account information: \n{info}')
+
+    assets_raw = client.get_exchange_info()
+    assets =  [[i['symbol'], asset_list, client] for i in assets_raw['symbols'] ]
+
+    p = Pool(processes=12)
+    p.starmap(validate_ticker, assets)
+    p.close()
+
+    logging.debug(f'Total assets to be used: {len(asset_list)}')
+    logging.info(f'Assents found {asset_list}')
+
     for asset in asset_list:
         time.sleep(random.randrange(90, 150)/100)
         bot = bot_work(asset, client)
