@@ -100,6 +100,15 @@ class bot_work:
         logging.debug(f'{self.coin} Oversold {last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD}')
         logging.debug(f'{self.coin} OVERBOUGHT {last_rsi >= RSI_OVERBOUGHT and last_mfi >= MFI_OVERBOUGHT}')
 
+        #STOP LOSS
+        if self.onhold:
+            ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
+            if ctp <= ctp * self.STOP_LOSS:
+                loss = ctp - ctp * self.STOP_LOSS
+                self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando stop loss {self.coin} vendido. Prejuizo {loss}')
+                self.onhold = False
+                self.price_onhold = None
+
         if last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD:
             self.LAST_STATUS.append(True)
             msg = f'{self.coin} Em tendencia de long'
@@ -109,7 +118,6 @@ class bot_work:
                 self.telebot.sendMessage(os.environ['telegram_chat_id'], msg)
                 self.first_msg = True
 
-            logging.debug(f'Vamos comprar? {len(self.LAST_STATUS) >= 2 and self.LAST_STATUS[-1] and self.LAST_STATUS[-2]} - {not self.onhold} - {self.LAST_STATUS[-2:]}')
             if not self.onhold:
                 self.price_onhold = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
                 self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando compra de {self.coin} por ${self.price_onhold}')
@@ -117,36 +125,26 @@ class bot_work:
 
         elif last_rsi >= RSI_OVERBOUGHT and last_mfi >= MFI_OVERBOUGHT:
             self.LAST_STATUS.append(False)
-            msg = f'{self.coin} Em tentencia de sort'
+            msg = f'{self.coin} Em tendencia de short - Temos em posição? {self.onhold}'
             logging.warn(msg)
 
             if self.LAST_STATUS[-1] or not self.first_msg:
                 self.telebot.sendMessage(os.environ['telegram_chat_id'], msg)
                 self.first_msg = True
 
-            logging.debug(f'Vamos vender? {len(self.LAST_STATUS) >= 2 and not self.LAST_STATUS[-1] and not self.LAST_STATUS[-2]} - {self.onhold} - {self.LAST_STATUS[-2:]}')
             if self.onhold:
                 ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
-                sell_price = ctp - self.price_onhold
-                self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando venda de {self.coin} por ${ctp}. Lucro: {sell_price}')
-                self.onhold = False
-                self.price_onhold = None
 
-
-        #STOP LOSS
-        if len(self.LAST_STATUS) >= 2 and not self.LAST_STATUS[-1] and not self.LAST_STATUS[-2]:
-            if self.onhold:
-                ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
-                if ctp <= ctp * self.STOP_LOSS:
-                    loss = ctp - ctp * self.STOP_LOSS
-                    self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando stop loss {self.coin} vendido. Prejuizo {loss}')
+                if self.price_onhold >= ctp:
+                    sell_price = ctp - self.price_onhold
+                    self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando venda de {self.coin} por ${ctp}. Lucro: {sell_price.normalize()}')
                     self.onhold = False
                     self.price_onhold = None
             
         self.reset_lists()
 
     def start_stream(self):
-        SOCKET = f"wss://stream.binance.com:9443/ws/{self.coin}@kline_1m"
+        SOCKET = f"wss://stream.binance.com:9443/ws/{self.coin.lower()}@kline_1m"
         websocket.enableTrace(False)
         ws = websocket.WebSocketApp(SOCKET, on_open=self.on_open, on_message=self.on_messege)
         ws.run_forever()

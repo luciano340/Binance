@@ -22,16 +22,35 @@ logging.debug(f'Connection status {status["data"]}')
 info = client.get_account()
 logging.debug(f'Account information: \n{info}')
 
-#assets = client.futures_exchange_info()
+assets = client.get_exchange_info()
 
-asset_list = ['BTCUSDT', 'MATICUSDT', 'ETHUSDT', 'LINKUSDT', 'BNBUSDT', 'SOLUSDT']
+# asset_list = ['BTCUSDT', 'MATICUSDT', 'ETHUSDT', 'LINKUSDT', 'BNBUSDT', 'SOLUSDT']
 
-# asset_list = list()
-# for k in assets['symbols']:
-#     if re.search(r'[0-9]$', k['symbol']):
-#         continue
+asset_list = list()
+for k in assets['symbols']:
+    if re.search(r'[0-9]$', k['symbol']):
+        continue
 
-#     asset_list.append(k['symbol'])
+    if not re.search(r'USDT$', k['symbol']):
+        continue
+    
+    try:
+        ticker_info = client.get_ticker(symbol=k['symbol'])
+    except Exception as err:
+        print(f'{err} - {k['symbol']}')
+        continue
+    
+    print(f'Price {k['symbol']} {ticker_info['lastPrice']}')
+    if float(ticker_info['lastPrice']) < 0.50:
+        continue
+    
+    print(f'Volume {k['symbol']} {ticker_info['quoteVolume']}')
+    if float(ticker_info['quoteVolume']) < 24000:
+        continue
+
+    asset_list.append(k['symbol'])
+    print(asset_list)
+    time.sleep(random.randrange(50, 80)/100)
 
 logging.debug(f'Total assets to be used: {len(asset_list)}')
 logging.info(f'Assents found {asset_list}')
