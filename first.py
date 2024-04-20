@@ -20,21 +20,19 @@ def validate_ticker(symbol, array, client):
         time.sleep(random.randrange(60, 90)/100)
         ticker_info = client.get_ticker(symbol=symbol)
     except Exception as err:
-        print(f'{err} - {symbol}')
+        logging.error(f'{err} - {symbol}')
         return
     
-    print(f'Price {symbol} {ticker_info['lastPrice']} - {os.getpid()}')
     if float(ticker_info['lastPrice']) < 1.50:
         return
     
-    print(f'Volume {symbol} {ticker_info['quoteVolume']} - {os.getpid()}')
     if float(ticker_info['quoteVolume']) < 48000:
         return
 
     array.append(symbol)
 
 if __name__ == '__main__':
-    logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.INFO,
+    logging.basicConfig(filename='general.log', encoding='utf-8', level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(pathname)s on Line: %(lineno)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S')
 
     try:

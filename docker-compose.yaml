@@ -1,0 +1,12 @@
+version: '1'
+
+services:
+  app:
+    image: lucianoromao/binance_bot:1.1
+    environment:
+      api_key_binance: 'your_key'
+      api_secret_biance: 'your_key'
+      telegram_bot_token: 'your_key'
+      telegram_chat_id: 'your_key'
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"

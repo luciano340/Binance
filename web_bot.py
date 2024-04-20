@@ -30,11 +30,9 @@ class bot_work:
 
     def on_open(self, ws):
         logging.info(f'Opened connection on stream for coin {self.coin}')
-        print(f'Opened connection on stream for coin {self.coin}')
 
     def on_close(self, ws):
         logging.debug(f'Closed connection on stream for coin {self.coin}')
-        print(f'Closed connection on stream for coin {self.coin}')
 
     def on_messege(self, ws, messege):
         time.sleep(random.randrange(40, 80)/100)
@@ -45,7 +43,8 @@ class bot_work:
         RSI_OVERSOLD = 25
         MFI_OVERBOUGHT = 80
         MFI_OVERSOLD = 20
-        STOP_LOSS = Decimal(0.90)
+        STOP_LOSS = Decimal(0.98)
+        #Fazer STOPWIN
 
         if len(self.LAST_STATUS) >= 4:
             del self.LAST_STATUS[:2]
@@ -103,7 +102,7 @@ class bot_work:
         #STOP LOSS
         if self.onhold:
             ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
-            if ctp <= ctp * self.STOP_LOSS:
+            if ctp <= self.price_onhold * self.STOP_LOSS:
                 loss = ctp - ctp * self.STOP_LOSS
                 self.telebot.sendMessage(os.environ['telegram_chat_id'], f'Simulando stop loss {self.coin} vendido. Prejuizo {loss}')
                 self.onhold = False
