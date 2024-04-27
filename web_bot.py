@@ -84,13 +84,15 @@ class bot_work:
 
     def on_messege(self, ws, messege):
         #Deafult Values
-        RSI_PERIOD = 14
-        RSI_OVERBOUGHT = 80
-        RSI_OVERSOLD = 15
-        MFI_OVERBOUGHT = 85
-        MFI_OVERSOLD = 20
-        STOP_LOSS = Decimal(0.98)
-        #Fazer STOPWIN
+        RSI_PERIOD      = 14
+        RSI_OVERBOUGHT  = 80
+        RSI_OVERSOLD    = 15
+        MFI_OVERBOUGHT  = 85
+        MFI_OVERSOLD    = 20
+        STOP_LOSS       = Decimal(0.98)
+        STOP_WIN        = Decimal(1.05)
+
+
 
         logging.debug(f'Debugging received message. {self.coin} - {self.onhold} - PID {os.getpid()}')
         logging.debug(f'Number of items in the MFI and RSI history {len(self.mfi_history)}')
@@ -147,13 +149,17 @@ class bot_work:
         logging.debug(f'{self.coin} Oversold {last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD}')
         logging.debug(f'{self.coin} OVERBOUGHT {last_rsi >= RSI_OVERBOUGHT and last_mfi >= MFI_OVERBOUGHT}')
 
-        #STOP LOSS
+        #STOP LOSS and WIN
         if self.onhold:
             ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
             if ctp <= self.price_onhold * STOP_LOSS:
                 loss = ctp - ctp * STOP_LOSS
                 self.__sell_position(ctp, loss)
-                self.__send_telegram_msg(f'Simulando stop loss {self.coin} vendido. Prejuizo {loss}')
+                self.__send_telegram_msg(f'Simulando stop loss {self.coin} vendido. Prejuizo ${loss}')
+            elif ctp >= self.price_onhold * STOP_WIN:
+                balance = self.price_onhold - ctp
+                self.__sell_position(ctp, balance)
+                self.__send_telegram_msg(f'Simulando stop win {self.coin} vendido. Lucro: ${balance}')
 
 
         if last_rsi <= RSI_OVERSOLD and last_mfi <= MFI_OVERSOLD:
