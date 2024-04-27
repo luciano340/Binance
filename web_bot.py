@@ -31,19 +31,50 @@ class bot_work:
         symbol_info = self.db.find_position(coin)
 
         if symbol_info:
-            logging.debug(f'{coin} já em posição ao iniciar process {os.getpid()} {symbol_info}')
+            logging.debug(f"{coin} already in position when starting process {os.getpid()} {symbol_info}")
             self.price_onhold = symbol_info['purchase_price']
             self.onhold = True
         
     def __send_telegram_msg(self, msg):
+        time.sleep(random.randrange(20, 40)/100)
         self.telebot.sendMessage(os.environ['telegram_chat_id'], msg)
 
-    def reset_lists(self):
+    def __reset_lists(self):
         logging.info(f'Reset informations lists for {self.coin}')
         self.closed_values.clear()
         self.high_values.clear()
         self.low_values.clear()
         self.volume_values.clear()
+    
+    def __sell_position(self, ctp, balance):
+        logging.debug(f"Performing sell {self.coin} - {self.onhold} - PID {os.getpid()}")
+        self.onhold = False
+        self.price_onhold = None
+        sellDTO = SellInfoDTO(
+            sell_price = float(ctp),
+            sell_date = dt.datetime.today(),
+            balance = float(balance)
+        )
+        self.db.sell_position(self.coin, sellDTO)
+
+    def __buy_position(self, rsi, mfi):
+        logging.debug(f"Performing purchase {self.coin} - {self.onhold} - PID {os.getpid()}")
+
+        self.price_onhold = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
+        self.onhold = True
+
+        inputDTO = TradeInputDTO(
+            symbol = self.coin,
+            purchase_price = float(self.price_onhold),
+            mfi = mfi,
+            rsi = rsi,
+            date = dt.datetime.today(),
+            in_position = True
+        )
+
+        logging.debug(f'DTOINPUT {inputDTO} - {os.getpid()}')
+        self.db.insert_position(inputDTO)
+        logging.debug(f'Purchase completed {self.coin} - {self.onhold} - {os.getpid()}')
 
     def on_open(self, ws):
         logging.info(f'Opened connection on stream for coin {self.coin}')
@@ -52,9 +83,6 @@ class bot_work:
         logging.debug(f'Closed connection on stream for coin {self.coin}')
 
     def on_messege(self, ws, messege):
-        time.sleep(random.randrange(40, 80)/100)
-        logging.debug(f'Debugando msg recebido. {self.coin} - {self.onhold} - PID {os.getpid()}')
-        logging.debug(f'Quantidade itens no historico de MFI e RSI {len(self.mfi_history)}')
         #Deafult Values
         RSI_PERIOD = 14
         RSI_OVERBOUGHT = 80
@@ -64,10 +92,13 @@ class bot_work:
         STOP_LOSS = Decimal(0.98)
         #Fazer STOPWIN
 
+        logging.debug(f'Debugging received message. {self.coin} - {self.onhold} - PID {os.getpid()}')
+        logging.debug(f'Number of items in the MFI and RSI history {len(self.mfi_history)}')
+
         if len(self.LAST_STATUS) >= 4:
             del self.LAST_STATUS[:2]
         
-        if len(self.mfi_history) >= 60:
+        if len(self.mfi_history) >= 30:
             RSI = (sum(self.rsi_history) / len(self.rsi_history))
             RSI_OVERBOUGHT = RSI + 10
             RSI_OVERSOLD = RSI - 10
@@ -76,7 +107,7 @@ class bot_work:
             MFI_OVERBOUGHT = MFI + 5
             MFI_OVERSOLD = MFI - 5
 
-            logging.debug(f'Mudando valores \nRSI_OVERBOUGHT: {RSI_OVERBOUGHT}\nRSI_OVERSOLD: {RSI_OVERSOLD}\nMSI_OVERBOUGHT: {MFI_OVERBOUGHT}\nMSI_OVERSOLD: {MFI_OVERSOLD}')
+            logging.debug(f'Changing values \nRSI_OVERBOUGHT: {RSI_OVERBOUGHT}\nRSI_OVERSOLD: {RSI_OVERSOLD}\nMSI_OVERBOUGHT: {MFI_OVERBOUGHT}\nMSI_OVERSOLD: {MFI_OVERSOLD}')
             self.rsi_history.pop(0)
             self.mfi_history.pop(0)
 
@@ -121,16 +152,7 @@ class bot_work:
             ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
             if ctp <= self.price_onhold * STOP_LOSS:
                 loss = ctp - ctp * STOP_LOSS
-                self.onhold = False
-                self.price_onhold = None
-
-                sellDTO = SellInfoDTO(
-                    sell_price = float(ctp),
-                    sell_date = dt.datetime.today(),
-                    balance = float(loss)
-                )
-                self.db.sell_position(self.coin, sellDTO)
-                time.sleep(random.randrange(20, 40)/100)
+                self.__sell_position(ctp, loss)
                 self.__send_telegram_msg(f'Simulando stop loss {self.coin} vendido. Prejuizo {loss}')
 
 
@@ -140,27 +162,12 @@ class bot_work:
             logging.warn(msg)
 
             if not self.LAST_STATUS[-1] or not self.first_msg:
-                time.sleep(random.randrange(20, 40)/100)
                 self.__send_telegram_msg(msg)
                 self.first_msg = True
 
             if not self.onhold:
-                logging.debug(f'Realizando compra {self.coin} - {self.onhold} - PID {os.getpid()}')
-                self.price_onhold = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
-                self.onhold = True
-                inputDTO = TradeInputDTO(
-                    symbol = self.coin,
-                    purchase_price = float(self.price_onhold),
-                    mfi = last_mfi,
-                    rsi = last_rsi,
-                    date = dt.datetime.today(),
-                    in_position = True
-                )
-                logging.debug(f'DTOINPUT {inputDTO} - {os.getpid()}')
-                self.db.insert_position(inputDTO)
-                time.sleep(random.randrange(20, 40)/100)
+                self.__buy_position(last_rsi, last_mfi)
                 self.__send_telegram_msg(f'Simulando compra de {self.coin} por ${self.price_onhold}')
-                logging.debug(f'compra realizada {self.coin} - {self.onhold} - {os.getpid()}')
 
         elif last_rsi >= RSI_OVERBOUGHT and last_mfi >= MFI_OVERBOUGHT:
             self.LAST_STATUS.append(False)
@@ -168,28 +175,18 @@ class bot_work:
             logging.warn(msg)
 
             if self.LAST_STATUS[-1] or not self.first_msg:
-                time.sleep(random.randrange(20, 40)/100)
                 self.__send_telegram_msg(msg)
                 self.first_msg = True
 
             if self.onhold:
                 ctp = Decimal(self.client.get_symbol_ticker(symbol=self.coin)['price'])
-
                 if self.price_onhold >= ctp:
                     sell_ticket_price = ctp - self.price_onhold
-                    self.onhold = False
-                    self.price_onhold = None
-                    sellDTO = SellInfoDTO(
-                        sell_price = float(ctp),
-                        sell_date = dt.datetime.today(),
-                        balance = float(sell_ticket_price)
-                    )
-                    self.db.sell_position(self.coin, sellDTO)
-                    time.sleep(random.randrange(20, 40)/100)
+                    self.__sell_position(ctp, sell_ticket_price)
                     self.__send_telegram_msg(f'Simulando venda de {self.coin} por ${ctp}. Lucro: {sell_ticket_price.normalize()}')
 
             
-        self.reset_lists()
+        self.__reset_lists()
 
     def start_stream(self):
         SOCKET = f"wss://stream.binance.com:9443/ws/{self.coin.lower()}@kline_1m"
