@@ -44,6 +44,7 @@ if __name__ == '__main__':
             pool_maxsize=250,
             max_retries=5)
         client.session.mount('https://', request_config)
+        client.session.mount('wss://', request_config)
         manager = Manager()
         asset_list = manager.list()
     except Exception as err:
