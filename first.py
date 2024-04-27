@@ -1,7 +1,9 @@
+import requests.adapters
 from binance.client import Client
 from web_bot import bot_work
 from threading import Thread
 from multiprocessing import Pool, Manager
+import requests
 import logging
 import re
 import os
@@ -37,6 +39,11 @@ if __name__ == '__main__':
 
     try:
         client = Client(os.environ['api_key_binance'], os.environ['api_secret_biance'])
+        request_config = requests.adapters.HTTPAdapter(
+            pool_connections=250,
+            pool_maxsize=250,
+            max_retries=5)
+        client.session.mount('https://', request_config)
         manager = Manager()
         asset_list = manager.list()
     except Exception as err:
