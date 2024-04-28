@@ -1,0 +1,11 @@
+global:
+  scrape_interval: "5s"
+
+scrape_configs:
+  - job_name: "mongodb-sniffer"
+    static_configs:
+            - targets: ["localhost:9090", "MongoDB_Exporter:9216"]
+  
+  - job_name: "Scalper-sniffer"
+    static_configs:
+            - targets: ["binancebot:8000"]

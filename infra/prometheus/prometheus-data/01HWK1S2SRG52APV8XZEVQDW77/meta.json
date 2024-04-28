@@ -1,0 +1,17 @@
+{
+	"ulid": "01HWK1S2SRG52APV8XZEVQDW77",
+	"minTime": 1714312800293,
+	"maxTime": 1714320000000,
+	"stats": {
+		"numSamples": 1221875,
+		"numSeries": 2874,
+		"numChunks": 11496
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01HWK1S2SRG52APV8XZEVQDW77"
+		]
+	},
+	"version": 1
+}
