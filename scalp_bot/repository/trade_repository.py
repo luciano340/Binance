@@ -44,7 +44,7 @@ class RepositoryMongoTrade(RepositoryTradeInterface):
         ).dict()
 
     def sell_position(self, valor: str, info: SellInfoDTO) -> None:
-        logging.debug(f'sell_position informações no mongodb {input}')
+        logging.debug(f'sell_position informações no mongodb {valor}')
         filter = {
             "symbol": valor,
             "in_position": {"$eq": True}

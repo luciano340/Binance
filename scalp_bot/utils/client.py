@@ -11,9 +11,9 @@ class BinanceClient:
     def __create_client(self) -> Client:
         client = Client(os.environ['api_key_binance'], os.environ['api_secret_biance'])
         request_config = requests.adapters.HTTPAdapter(
-            pool_connections=250,
-            pool_maxsize=250,
-            max_retries=5)
+            pool_connections=999,
+            pool_maxsize=999,
+            max_retries=15)
         client.session.mount('https://', request_config)
         client.session.mount('wss://', request_config)
         
@@ -21,14 +21,15 @@ class BinanceClient:
 
     @function_error_counter.count_exceptions()
     def _run_function(self, function: str, **kwargs) -> dict:
+        sleep(random.randrange(60, 120)/100)
         try:
             if kwargs:
                 info = eval(f'self.client.{function}')(**kwargs)
             else:
                 info = eval(f'self.client.{function}')()
         except Exception as err:
-            logging.error(f'Function {function} - {err}')
-            sleep(random.randrange(50, 100)/100)
+            logging.exception(f'Function {function} - {err}')
+            sleep(random.randrange(60, 120)/100)
             self._run_function(function, **kwargs)
 
         function_counter.labels(function_name=function).inc()

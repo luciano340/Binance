@@ -4,6 +4,8 @@ from threading import Thread
 from multiprocessing import Pool, Manager
 from utils.client import BinanceClient
 from prometheus_client import start_http_server
+from queue import Queue
+from utils.telegram import telegrambot
 import logging
 import re
 import os
@@ -23,13 +25,13 @@ def validate_ticker(symbol, array, client):
         time.sleep(random.randrange(60, 90)/100)
         ticker_info = client.get_ticker(symbol=symbol)
     except Exception as err:
-        logging.error(f'{err} - {symbol}')
+        logging.exception(f'{err} - {symbol}')
         return
     
-    if float(ticker_info['lastPrice']) < 5:
+    if float(ticker_info['lastPrice']) < 15:
         return
     
-    if float(ticker_info['quoteVolume']) < 148000:
+    if float(ticker_info['quoteVolume']) < 120000:
         return
 
     array.append(symbol)
@@ -42,7 +44,7 @@ if __name__ == '__main__':
         logging.info('Starting prometheus server on port 8000')
         start_http_server(8000)
     except Exception as err:
-        logging.error(f'Error to start prometheus server {err}')
+        logging.exception(f'Error to start prometheus server {err}')
         exit(1)
         
     try:
@@ -50,7 +52,7 @@ if __name__ == '__main__':
         manager = Manager()
         asset_list = manager.list()
     except Exception as err:
-        logging.error(f'Connection Error {err}')
+        logging.exception(f'Connection Error {err}')
         exit(1)
 
     status = client.get_account_status()
@@ -69,7 +71,11 @@ if __name__ == '__main__':
     logging.debug(f'Total assets to be used: {len(asset_list)}')
     logging.info(f'Assents found {asset_list}')
 
+    queue = Queue(maxsize=2000)
     for asset in asset_list:
         time.sleep(random.randrange(90, 150)/100)
-        bot = bot_work(asset, client)
+        bot = bot_work(asset, client, queue)
         Thread(target=bot.start_stream).start()
+
+    tbot = telegrambot()
+    Thread(target=tbot.send_messages, args=(queue,)).start()
