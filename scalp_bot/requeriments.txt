@@ -3,7 +3,7 @@ ta-lib
 numpy
 websocket_client
 requests
-telepot
+pyTelegramBotAPI
 pymongo
 pydantic
 prometheus_client

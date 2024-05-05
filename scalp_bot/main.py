@@ -1,6 +1,5 @@
 
 from web_bot import bot_work
-from threading import Thread
 from multiprocessing import Pool, Manager
 from utils.client import BinanceClient
 from prometheus_client import start_http_server
@@ -11,6 +10,7 @@ import re
 import os
 import random
 import time
+import threading
 
 
 def validate_ticker(symbol, array, client):
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     assets_raw = client.get_exchange_info()
     assets =  [[i['symbol'], asset_list, client] for i in assets_raw['symbols'] ]
 
-    p = Pool(processes=20)
+    p = Pool(processes=40)
     p.starmap(validate_ticker, assets)
     p.close()
 
@@ -75,7 +75,9 @@ if __name__ == '__main__':
     for asset in asset_list:
         time.sleep(random.randrange(90, 150)/100)
         bot = bot_work(asset, client, queue)
-        Thread(target=bot.start_stream).start()
+        threading.Thread(target=bot.start_stream, name=f'scalp_bot_{asset}').start()
 
     tbot = telegrambot()
-    Thread(target=tbot.send_messages, args=(queue,)).start()
+    threading.Thread(target=tbot.send_messages, args=(queue,), name="telegram_send_message").start()
+    threading.Thread(target=tbot.start_bot, name="telegram_bot").start()
+    print('Bot iniciado')

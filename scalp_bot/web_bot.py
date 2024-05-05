@@ -148,13 +148,11 @@ class bot_work:
             logging.debug(f'Verificando stop loss {self.coin} - {ctp} - stop loss: {self.price_onhold * STOP_LOSS} - {ctp <= self.price_onhold * STOP_LOSS}')
             logging.debug(f'Verificando stop win {self.coin} - {ctp} - stop loss: {self.price_onhold * STOP_WIN} - {ctp >= self.price_onhold * STOP_WIN}')
             if ctp <= self.price_onhold * STOP_LOSS:
-                loss = ctp - ctp * STOP_LOSS
+                loss = ctp - self.price_onhold
                 self.queue.put(f'Simulando stop loss {self.coin} vendido. Prejuizo ${loss}')
-                if loss >= 0:
-                    loss = loss * -1
                 self.__sell_position(ctp, loss)
             elif ctp >= self.price_onhold * STOP_WIN:
-                balance = self.price_onhold - ctp
+                balance = ctp - self.price_onhold
                 self.__sell_position(ctp, balance)
                 self.queue.put(f'Simulando stop win {self.coin} vendido. Lucro: ${balance}')
 
