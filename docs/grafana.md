@@ -1,19 +1,16 @@
-# Granfa: Interface Gráfica para Banco de Dados MongoDB
+# Grafana
 
-O Granfa é uma interface gráfica para gerenciamento de bancos de dados MongoDB. Ele oferece uma maneira intuitiva e visual de interagir com suas coleções de dados, executar consultas, adicionar, editar e excluir documentos, entre outras operações.
+O Grafana é uma plataforma de análise e visualização de métricas de código aberto, projetada para ajudar as equipes a entender melhor o desempenho de seus aplicativos, infraestrutura e serviços. Ele permite que os usuários criem painéis dinâmicos e interativos para monitorar e analisar dados em tempo real.
 
-## Acesso ao Granfa:
+Com o Grafana, os usuários podem se conectar a uma variedade de fontes de dados, como Prometheus, InfluxDB, Elasticsearch e muitas outras, para coletar métricas e logs. Em seguida, eles podem criar painéis personalizados com gráficos, tabelas, alertas e outros elementos visuais para visualizar e entender melhor o comportamento de seus sistemas.
+
+Além disso, o Grafana oferece recursos avançados de exploração de dados, suporte a consultas SQL-like e linguagens de consulta específicas da fonte de dados para facilitar a análise de dados complexos. Ele também possui uma vasta biblioteca de plugins e integrações, permitindo que os usuários personalizem e estendam suas funcionalidades de acordo com suas necessidades específicas.
+
+Em resumo, o Grafana é uma ferramenta poderosa e flexível que facilita a análise e visualização de dados, ajudando as equipes a tomar decisões informadas e melhorar a confiabilidade e o desempenho de seus sistemas.
+## Acesso ao grafana:
 
 Para acessar o Granfa, utilize as seguintes credenciais:
 
+- **url:** http://localhost:8186/
 - **Usuário:** admin
 - **Senha:** admin
-
-## Principais Recursos:
-
-- **Visualização de Dados:** Explore seus bancos de dados MongoDB de forma visual, navegando por coleções e documentos.
-- **Edição de Documentos:** Adicione, edite e exclua documentos diretamente na interface do Granfa.
-- **Execução de Consultas:** Execute consultas complexas e visualize os resultados de forma clara e organizada.
-- **Gerenciamento de Banco de Dados:** Crie, modifique e exclua bancos de dados e coleções com facilidade.
-
-O Granfa é uma ferramenta valiosa para desenvolvedores e administradores de banco de dados que desejam simplificar o gerenciamento de seus bancos de dados MongoDB por meio de uma interface gráfica amigável.
