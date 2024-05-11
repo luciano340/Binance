@@ -11,9 +11,9 @@ class RepositoryTradeInterface(ABC):
         pass
 
     @abstractmethod
-    def sell_position(self):
+    def find_all_positions(self):
         pass
 
-    # @abstractmethod
-    # def delete(self):
-    #     pass
+    @abstractmethod
+    def sell_position(self):
+        pass

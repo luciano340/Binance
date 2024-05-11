@@ -40,8 +40,30 @@ class RepositoryMongoTrade(RepositoryTradeInterface):
         return TradeOutputDTO(
             id = str(r['_id']),
             symbol = r['symbol'],
-            purchase_price = r['purchase_price']
+            purchase_price = r['purchase_price'],
+            date    =   r['date']
         ).dict()
+
+    def find_all_positions(self) -> list[TradeOutputDTO]:
+        logging.debug('Starting find_all_position mongodb')
+        filter = {
+            "in_position": {"$eq": True}
+        }
+
+        r = self.db.find(filter)
+        
+        return_list = list()
+        for doc in r:
+            return_list.append(
+                TradeOutputDTO(
+                    id = str(doc['_id']),
+                    symbol = doc['symbol'],
+                    purchase_price = doc['purchase_price'],
+                    date = doc['date']
+                ).dict()
+            )
+        
+        return return_list
 
     def sell_position(self, valor: str, info: SellInfoDTO) -> None:
         logging.debug(f'sell_position informações no mongodb {valor}')

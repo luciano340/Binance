@@ -23,3 +23,4 @@ class TradeOutputDTO(BaseModel):
     id: str
     symbol: str
     purchase_price: float
+    date: dt.datetime

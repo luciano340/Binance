@@ -80,12 +80,12 @@ class bot_work:
     def on_messege(self, ws, messege):
         #Deafult Values
         RSI_PERIOD      = 14
-        RSI_OVERBOUGHT  = 80
+        RSI_OVERBOUGHT  = 75
         RSI_OVERSOLD    = 20
-        MFI_OVERBOUGHT  = 85
-        MFI_OVERSOLD    = 15
+        MFI_OVERBOUGHT  = 80
+        MFI_OVERSOLD    = 25
         STOP_LOSS       = Decimal(0.98)
-        STOP_WIN        = Decimal(1.04)
+        STOP_WIN        = Decimal(1.03)
 
         logging.debug(f'Debugging received message. {self.coin} - {self.onhold} - PID {os.getpid()}')
         logging.debug(f'Number of items in the MFI and RSI history {len(self.mfi_history)} - {self.coin}')

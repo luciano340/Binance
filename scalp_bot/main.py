@@ -80,4 +80,3 @@ if __name__ == '__main__':
     tbot = telegrambot()
     threading.Thread(target=tbot.send_messages, args=(queue,), name="telegram_send_message").start()
     threading.Thread(target=tbot.start_bot, name="telegram_bot").start()
-    print('Bot iniciado')

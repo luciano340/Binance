@@ -48,12 +48,37 @@ class telegrambot:
 
     def __check_coins_inposition(self, message):
         text = message.text.split()
-    
+        mongo = RepositoryMongoTrade()
         if len(text) == 1:
-            self.telebot.send_message(os.environ['telegram_chat_id'], "Vai retornar todas as posições!")
+            logging.debug('Starting mongodb')
+
+            try:
+                r = mongo.find_all_positions()
+            except Exception as err:
+                logging.error(f'{err} erro para localizar')
+            
+            logging.debug(f'return from find {r}')
+            if not r:
+                self.telebot.send_message(os.environ['telegram_chat_id'], "Não temos nenhuma moeda em posição!")
+                return
+            
+            logging.debug('Entrou aqui')
+            str_coins = '\n**Moedas em posição**'
+            for doc in r:
+                coin_str = f"Moeda: {doc['symbol']}\nPreço de compra: {doc['purchase_price']}\nComprado em: {doc['date']}\n"
+                str_coins = f"{str_coins}\n{coin_str}"
+            
+            logging.debug(len(str_coins))
+            logging.debug(f'debugstr {str_coins}')
+            len_str = len(str_coins)
+            if len_str >= 4000:
+                middle = len_str//2
+                self.telebot.send_message(os.environ['telegram_chat_id'], f"{str_coins[:middle]}")
+                self.telebot.send_message(os.environ['telegram_chat_id'], f"{str_coins[middle:]}")
+            else:
+                self.telebot.send_message(os.environ['telegram_chat_id'], f"{str_coins}")
             return
 
-        mongo = RepositoryMongoTrade()
         coin = text[1]
         r = mongo.find_position(coin)
 
@@ -61,7 +86,8 @@ class telegrambot:
             self.telebot.send_message(os.environ['telegram_chat_id'], f"Não temos a {coin} em posição")
             return 
 
-        self.telebot.send_message(os.environ['telegram_chat_id'], f"{r}")
+        coin_str = f"Moeda: {r['symbol']}\nPreço de compra: {r['purchase_price']}\nComprado em: {r['date']}\n"
+        self.telebot.send_message(os.environ['telegram_chat_id'], coin_str)
         mongo.client.close()
 
     def __check_proccess(self, message):
@@ -72,7 +98,18 @@ class telegrambot:
                 coin = name.split('_')[2]
                 coins_list = f'{coins_list}\n{coin}'
 
-        self.telebot.send_message(os.environ['telegram_chat_id'], f"Atualmente o bot está trabalho com as seguintes moedas:\n{coins_list}")
+        logging.debug(len(coins_list))
+        logging.debug(coins_list)
+        if len(coins_list) > 400:
+            middle = len(coins_list)//2
+            self.telebot.send_message(os.environ['telegram_chat_id'], f"Atualmente o bot está trabalho com as seguintes moedas:\n{coins_list[:middle]}")
+            self.telebot.send_message(os.environ['telegram_chat_id'], f"\n{coins_list[middle:]}")
         
+        self.telebot.send_message(os.environ['telegram_chat_id'], f"Atualmente o bot está trabalho com as seguintes moedas:\n{coins_list}")
     def start_bot(self):
-        self.telebot.polling()
+        while True:
+            try:
+                self.telebot.polling(none_stop=True, timeout=300)
+            except Exception as err:
+                logging.error(f'Error on telegram polling {err}')
+                time.sleep(10)
