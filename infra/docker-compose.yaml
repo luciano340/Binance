@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  binancebot:
+    image: scalper_bot
+    build: 
+      context: ../scalp_bot
+      dockerfile: Dockerfile
+    container_name: BinanceBot
+    ports:
+      - "8000:8000"
+    environment:
+      api_key_binance: 'api_key'
+      api_secret_biance: 'api_secret'
+      telegram_bot_token: 'token'
+      telegram_chat_id: 'telegram_chat'
+      mongo_uri: mongodb://user:paswd@host.docker.internal:27017/database
+      mongo_collection: collection
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
+  mongodb:
+    image: mongo:latest
+    container_name: mmongoDB
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - /c/Users/user/projetos/volumes/mongodb:/data/db
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongoDBexpress
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: password
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    depends_on:
+      - mongodb
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
+  mongo_exporter:
+    image: percona/mongodb_exporter:0.40
+    container_name: MongoDB_Exporter
+    restart: always
+    ports:
+      - 9216:9216
+    command:
+        - '--mongodb.global-conn-pool'
+        - '--collector.diagnosticdata'
+        - '--discovering-mode'
+        - '--compatible-mode'
+        - '--mongodb.collstats-colls=admin.companies,admin.restaurants'
+    environment:
+      WAIT_HOSTS: localhost:27017
+      MONGODB_URI: mongodb://admin:password@host.docker.internal:27017/
+    depends_on:
+      - mongodb
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
+  prometheus:
+    container_name: Prometheus
+    build:
+      context: ./prometheus
+      dockerfile: Dockerfile
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus/prometheus-data/:/prometheus/
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: unless-stopped
+    user: root
+    volumes:
+      - ./grafana/grafana-data/:/var/lib/grafana/
+    ports:
+      - 8186:3000
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"

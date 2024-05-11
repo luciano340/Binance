@@ -1,0 +1,17 @@
+{
+	"ulid": "01HXMS4JPY315VH7JKBB8YK16Y",
+	"minTime": 1715450401029,
+	"maxTime": 1715457600000,
+	"stats": {
+		"numSamples": 2453837,
+		"numSeries": 3025,
+		"numChunks": 21175
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01HXMS4JPY315VH7JKBB8YK16Y"
+		]
+	},
+	"version": 1
+}

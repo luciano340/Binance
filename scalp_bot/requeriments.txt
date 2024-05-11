@@ -1,0 +1,9 @@
+python-binance
+ta-lib
+numpy
+websocket_client
+requests
+pyTelegramBotAPI
+pymongo
+pydantic
+prometheus_client
