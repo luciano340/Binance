@@ -2,15 +2,15 @@ import websocket, json, talib, numpy, logging
 import os
 import datetime as dt
 from decimal import Decimal
-from repository.trade_repository import RepositoryMongoTrade
-from repository.dto import SellInfoDTO, TradeInputDTO, TradeOutputDTO
+from repository.dto import SellInfoDTO, TradeInputDTO
 from collections import deque
+from repository.gateway import RepositoryTradeInterface
 
 class bot_work:
-    def __init__(self, coin, client, queue):
+    def __init__(self, coin, client, queue, repository: RepositoryTradeInterface):
         self.client = client
         self.coin = coin
-        self.db = RepositoryMongoTrade()
+        self.db = repository
         self.closed_values = deque()
         self.high_values = deque()
         self.low_values = deque()
@@ -23,6 +23,7 @@ class bot_work:
         self.rsi_history = deque()
         self.__check_first_onhold(coin)
         self.queue = queue
+        self.current_wallet = Decimal(self.client.client.get_asset_balance(asset="USDT")['free'])
 
     def __check_first_onhold(self, coin):
         symbol_info = self.db.find_position(coin)
@@ -51,6 +52,8 @@ class bot_work:
             balance = float(balance)
         )
         self.db.sell_position(self.coin, sellDTO)
+        self.current_wallet = self.current_wallet + balance
+        self.queue.put(f'Balanço após a venda de {self.coin}: {self.current_wallet}')
 
     def __buy_position(self, rsi, mfi):
         logging.debug(f"Performing purchase {self.coin} - {self.onhold} - PID {os.getpid()}")
@@ -70,6 +73,8 @@ class bot_work:
         logging.debug(f'DTOINPUT {inputDTO} - {os.getpid()}')
         self.db.insert_position(inputDTO)
         logging.debug(f'Purchase completed {self.coin} - {self.onhold} - {os.getpid()}')
+        self.current_wallet = self.current_wallet - self.price_onhold
+        self.queue.put(f'Balanço após a compra de {self.coin}: {self.current_wallet}')
 
     def on_open(self, ws):
         logging.info(f'Opened connection on stream for coin {self.coin}')
@@ -80,12 +85,12 @@ class bot_work:
     def on_messege(self, ws, messege):
         #Deafult Values
         RSI_PERIOD      = 14
-        RSI_OVERBOUGHT  = 75
+        RSI_OVERBOUGHT  = 60
         RSI_OVERSOLD    = 20
-        MFI_OVERBOUGHT  = 80
+        MFI_OVERBOUGHT  = 65
         MFI_OVERSOLD    = 25
         STOP_LOSS       = Decimal(0.98)
-        STOP_WIN        = Decimal(1.03)
+        STOP_WIN        = Decimal(1.05)
 
         logging.debug(f'Debugging received message. {self.coin} - {self.onhold} - PID {os.getpid()}')
         logging.debug(f'Number of items in the MFI and RSI history {len(self.mfi_history)} - {self.coin}')
@@ -163,7 +168,7 @@ class bot_work:
             logging.warn(msg)
 
             if not self.LAST_STATUS[-1] or not self.first_msg:
-                self.queue.put(msg)
+                #self.queue.put(msg)
                 self.first_msg = True
 
             if not self.onhold:
@@ -176,7 +181,7 @@ class bot_work:
             logging.warn(msg)
 
             if self.LAST_STATUS[-1] or not self.first_msg:
-                self.queue.put(msg)
+                #self.queue.put(msg)
                 self.first_msg = True
 
             if self.onhold:

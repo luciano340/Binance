@@ -7,14 +7,15 @@ import threading
 from queue import Queue
 from prometheus_client import Counter, Gauge, Summary, Histogram
 from timeit import default_timer as timer
-from repository.trade_repository import RepositoryMongoTrade
+from repository.gateway import RepositoryTradeInterface
 
 class telegrambot:
     __msg_queue = Gauge('telegram_msg_queue', 'Total of messages on the python queue to telegram bot')
     __status_code = Counter('telegram_responses', 'Response quantity per status code', ['endpoint', 'status_code'])
     __response_time = Histogram('telegram_response_time', 'Check the response time of Telegram API requests', ['endpoint'])
-    def __init__(self) -> None:
-        self.telebot = telebot.TeleBot(os.environ['telegram_bot_token'])    
+    def __init__(self, repository: RepositoryTradeInterface) -> None:
+        self.telebot = telebot.TeleBot(os.environ['telegram_bot_token'])
+        self.repository =  repository
         self.__init_commands()
 
     def send_messages(self, queue: Queue) -> None:
@@ -48,7 +49,7 @@ class telegrambot:
 
     def __check_coins_inposition(self, message):
         text = message.text.split()
-        mongo = RepositoryMongoTrade()
+        mongo = self.repository
         if len(text) == 1:
             logging.debug('Starting mongodb')
 

@@ -5,10 +5,28 @@ from gateway import RepositoryTradeInterface
 from dto import TradeInputDTO, TradeOutputDTO, SellInfoDTO
 from pydantic import validate_call
 
+class MongoClientSingleton:
+    _instance = None
+
+    @staticmethod
+    def get_instance():
+        if MongoClientSingleton._instance is None:
+            try:
+                logging.debug('Initializing MongoDB client singleton')
+                MongoClientSingleton._instance = pymongo.MongoClient(
+                    os.environ['mongo_uri'],
+                    maxPoolSize=150,  # Ajuste o tamanho máximo do pool
+                    minPoolSize=5    # Ajuste o tamanho mínimo do pool
+                )
+            except Exception as err:
+                logging.error(f'Error initializing MongoDB client: {err}')
+                raise Exception(err)
+        return MongoClientSingleton._instance
+
 class RepositoryMongoTrade(RepositoryTradeInterface):
     def __init__(self):
         try:
-            self.client = pymongo.MongoClient(os.environ['mongo_uri'])
+            self.client = MongoClientSingleton.get_instance()
         except Exception as err:
             logging.error(f'Error to connect with mongo {err}')
             raise Exception(err)

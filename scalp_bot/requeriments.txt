@@ -1,6 +1,6 @@
 python-binance
 ta-lib
-numpy
+numpy==1.26.4
 websocket_client
 requests
 pyTelegramBotAPI
